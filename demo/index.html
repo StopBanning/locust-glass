@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'">
+<title>locust-glass</title>
+<link rel="stylesheet" href="../src/glass.css">
+<link rel="stylesheet" href="demo.css">
+</head>
+<body>
+  <aside class="sidebar lg-panel" data-glass-panel="sidebar" data-glass-follow data-glass-radius="18">
+    <div class="sidebar__lights"></div>
+    <div class="brand"><span class="brand__mark">◈</span> locust-glass</div>
+    <nav class="nav">
+      <a class="nav__item is-current" href="#lens">Liquid lens</a>
+      <a class="nav__item" href="#goo">Goo</a>
+      <a class="nav__item" href="#panels">Real glass panels</a>
+      <a class="nav__item" href="#shine">Shine</a>
+    </nav>
+    <p class="nav__label">Worlds</p>
+    <nav class="nav">
+      <a class="nav__item" href="#dawn"><span class="dot" style="--c:#e85a9c"></span>Dawn</a>
+      <a class="nav__item" href="#gold"><span class="dot" style="--c:#f2c14e"></span>Gold</a>
+      <a class="nav__item" href="#thermal"><span class="dot" style="--c:#ff6b3d"></span>Thermal</a>
+    </nav>
+    <div class="sidebar__foot">
+      Made for <b>Locust</b><br><span>AI teammates on the models you pick</span>
+    </div>
+  </aside>
+
+  <main class="content" id="content">
+    <div class="scroll">
+      <figure class="hero"><img src="assets/dawn.jpg" alt="Locust: AI teammates, on the models you pick. locust.lol"></figure>
+      <section class="copy">
+        <h1>Liquid glass for every Electron app.</h1>
+        <p>Apple's real glass under the window on macOS 26. A lens that bends what is behind it, buttons that melt into each other like drops, and light that follows your pointer, on Mac, Windows and Linux. Free and open source.</p>
+      </section>
+      <section class="grid">
+        <img src="assets/gold.jpg" alt="">
+        <img src="assets/caramel.jpg" alt="">
+        <img src="assets/thermal.jpg" alt="">
+        <img src="assets/wheat.jpg" alt="">
+      </section>
+    </div>
+
+    <div class="toolbar" data-goo>
+      <button class="lg-pill" aria-label="Back">‹</button>
+      <button class="lg-pill" aria-label="Forward">›</button>
+      <button class="lg-pill lg-pill--gap" id="drip">Add a drop</button>
+      <button class="lg-pill">Share</button>
+    </div>
+
+    <div class="bubble" data-lens data-shine id="bubble" aria-hidden="true"></div>
+
+    <div class="player" data-lens data-shine>
+      <img class="player__art" src="assets/gold.jpg" alt="">
+      <div class="player__text"><b>Locust</b><span>Claude, Codex, Gemini and more, as one team</span></div>
+      <div class="player__buttons" data-goo>
+        <button class="lg-pill" aria-label="Previous">⏮</button>
+        <button class="lg-pill" aria-label="Play">▶</button>
+        <button class="lg-pill" aria-label="Next">⏭</button>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="demo.js"></script>
+</body>
+</html>

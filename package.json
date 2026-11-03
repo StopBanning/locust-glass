@@ -1,0 +1,61 @@
+{
+  "name": "locust-glass",
+  "version": "0.1.0",
+  "description": "Liquid glass for Electron: Apple's real glass under the window on macOS 26, plus a lens, gooey melting buttons and pointer-lit shine on every system. Made for Locust.",
+  "type": "module",
+  "main": "./src/main.js",
+  "exports": {
+    ".": {
+      "types": "./src/main.d.ts",
+      "default": "./src/main.js"
+    },
+    "./renderer": {
+      "types": "./src/renderer.d.ts",
+      "default": "./src/renderer.js"
+    },
+    "./preload": "./src/preload.cjs",
+    "./glass.css": "./src/glass.css"
+  },
+  "files": [
+    "src",
+    "native",
+    "scripts/build-native.cjs",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "install": "node scripts/build-native.cjs",
+    "build": "node scripts/build-native.cjs",
+    "demo": "electron demo/main.mjs",
+    "test": "node --test test/"
+  },
+  "keywords": [
+    "electron",
+    "liquid-glass",
+    "glassmorphism",
+    "macos",
+    "nsglasseffectview",
+    "glass",
+    "vibrancy",
+    "goo",
+    "locust"
+  ],
+  "homepage": "https://github.com/StopBanning/locust-glass#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/StopBanning/locust-glass.git"
+  },
+  "bugs": "https://github.com/StopBanning/locust-glass/issues",
+  "author": "Colin McCarthy (https://locust.lol)",
+  "license": "MIT",
+  "peerDependencies": {
+    "electron": ">=30"
+  },
+  "devDependencies": {
+    "electron": "^44.7.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "types": "./src/main.d.ts"
+}

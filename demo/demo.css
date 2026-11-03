@@ -1,0 +1,170 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #121218;
+  color: var(--lg-ink);
+  font: 13px/1.45 -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  display: grid;
+  grid-template-columns: 252px 1fr;
+}
+
+/* The sidebar floats in from the window's edges; on macOS 26, real glass is placed exactly under it. */
+.sidebar {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  bottom: 8px;
+  width: 236px;
+  display: flex;
+  flex-direction: column;
+  padding: 0 10px 12px;
+  box-sizing: border-box;
+  -webkit-app-region: drag;
+}
+
+.sidebar a, .sidebar button { -webkit-app-region: no-drag; }
+.sidebar__lights { height: 42px; flex: none; }
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 14px;
+  font-weight: 650;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+}
+
+.brand__mark { color: #c6f24e; }
+
+.nav { display: flex; flex-direction: column; gap: 1px; }
+
+.nav__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  color: var(--lg-ink);
+  text-decoration: none;
+  transition: background 160ms var(--lg-ease);
+}
+
+.nav__item:hover { background: rgba(255, 255, 255, 0.06); }
+.nav__item.is-current { background: rgba(255, 255, 255, 0.12); }
+
+.nav__label {
+  margin: 18px 10px 6px;
+  color: var(--lg-ink-soft);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--c); box-shadow: 0 0 10px var(--c); }
+
+.sidebar__foot {
+  margin-top: auto;
+  padding: 10px;
+  color: var(--lg-ink);
+  font-size: 12px;
+}
+
+.sidebar__foot span { color: var(--lg-ink-soft); }
+
+/* The content scrolls under the floating glass, as a Mac app's does under its toolbar. */
+.content {
+  grid-column: 2;
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 0;
+  background: #120f1c;
+}
+
+.scroll {
+  height: 100%;
+  overflow: auto;
+  padding: 72px 28px 160px;
+  box-sizing: border-box;
+}
+
+.hero {
+  margin: 0;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px -40px rgba(0, 0, 0, 0.9);
+}
+
+.hero img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
+
+.copy { max-width: 620px; margin: 28px 4px 22px; }
+.copy h1 { margin: 0 0 8px; font-size: 28px; line-height: 1.15; letter-spacing: -0.02em; font-weight: 700; }
+.copy p { margin: 0; color: var(--lg-ink-soft); font-size: 14px; }
+
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.grid img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: 16px; }
+
+/* The toolbar: one sheet of glass under its buttons, melting where they come close. */
+.toolbar {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  display: flex;
+  gap: 3px;
+  transform: translateX(-50%);
+  -webkit-app-region: no-drag;
+}
+
+.toolbar .lg-pill { min-width: 38px; }
+.toolbar .lg-pill--gap { margin-left: 22px; }
+.toolbar .lg-pill.is-new { animation: lg-drip 1500ms var(--lg-ease) both; }
+
+/* A drop swells out of its neighbour, hangs on by a neck, then lets go and wobbles. */
+@keyframes lg-drip {
+  0% { margin-left: -40px; transform: scale(0.35); }
+  35% { margin-left: -6px; transform: scale(0.9, 1.05); }
+  62% { margin-left: 16px; transform: scale(1.12, 0.9); }
+  80% { margin-left: 22px; transform: scale(0.96, 1.04); }
+  100% { margin-left: 20px; transform: none; }
+}
+
+/* A drop of glass to drag over the art: it bends what is under it at its rim. */
+.bubble {
+  position: absolute;
+  top: 120px;
+  left: 360px;
+  width: 168px;
+  height: 168px;
+  border-radius: 50%;
+  cursor: grab;
+  touch-action: none;
+}
+
+.bubble:active { cursor: grabbing; }
+
+/* A card of glass over the content, with its own melting buttons. */
+.player {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: min(560px, calc(100% - 48px));
+  padding: 12px 14px;
+  border-radius: 26px;
+  box-sizing: border-box;
+  transform: translateX(-50%);
+}
+
+.player__art { width: 52px; height: 52px; border-radius: 12px; object-fit: cover; }
+.player__text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.player__text b { font-size: 14px; }
+.player__text span { color: var(--lg-ink-soft); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player__buttons { display: flex; gap: 2px; }
+.player__buttons .lg-pill { min-width: 40px; padding: 0 12px; }
