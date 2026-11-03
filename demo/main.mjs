@@ -56,8 +56,11 @@ app.whenReady().then(async () => {
     else win.show()
     if (screenshot === undefined) return
     win.center()
+    win.setAlwaysOnTop(true)
     win.focus()
     await new Promise((resolve) => setTimeout(resolve, 4000))
+    // Windows draws Acrylic's plain stand-in colour on a window that is not the active one.
+    console.log(`locust-glass demo: window ${win.isFocused() ? 'active' : 'not active'}`)
     const size = screen.getPrimaryDisplay().size
     const scale = screen.getPrimaryDisplay().scaleFactor
     const [source] = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: size.width * scale, height: size.height * scale } })
