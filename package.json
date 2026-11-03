@@ -27,7 +27,7 @@
     "install": "node scripts/build-native.cjs",
     "build": "node scripts/build-native.cjs",
     "demo": "electron demo/main.mjs",
-    "test": "node --test test/"
+    "test": "node --test test/renderer.test.js"
   },
   "keywords": [
     "electron",
