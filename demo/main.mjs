@@ -6,7 +6,7 @@
 //   --capture            the frame worth a screenshot, shown behind other windows (macOS: scripts/capture.sh takes it)
 //   --screenshot <file>  Windows and Linux: a colourful window behind the demo, the whole screen taken through the
 //                        system after the glass has drawn, written to <file>, then quit (CI's proof the glass works)
-import { app, BrowserWindow, desktopCapturer, screen } from 'electron'
+import { app, BrowserWindow, desktopCapturer, nativeTheme, screen } from 'electron'
 import { writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -27,11 +27,15 @@ function backdropWindow() {
 }
 
 app.whenReady().then(async () => {
+  // The demo page is dark; Windows tints its Acrylic by the app's theme, so the material matches the page.
+  nativeTheme.themeSource = 'dark'
   if (screenshot !== undefined) backdropWindow()
+  // In a screenshot the demo leaves a margin of the backdrop showing, so the frame says what is behind the glass.
+  const work = screen.getPrimaryDisplay().workAreaSize
   const win = new BrowserWindow({
     ...glassWindowOptions(),
-    width: 1180,
-    height: 760,
+    width: screenshot === undefined ? 1180 : Math.min(1180, work.width - 160),
+    height: screenshot === undefined ? 760 : Math.min(760, work.height - 120),
     minWidth: 760,
     minHeight: 520,
     show: false,
@@ -48,6 +52,7 @@ app.whenReady().then(async () => {
     else win.show()
     if (screenshot === undefined) return
     win.center()
+    win.focus()
     await new Promise((resolve) => setTimeout(resolve, 4000))
     const size = screen.getPrimaryDisplay().size
     const scale = screen.getPrimaryDisplay().scaleFactor
