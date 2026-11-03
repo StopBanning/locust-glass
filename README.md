@@ -6,6 +6,14 @@
 
 ![Buttons melting together and a drop of glass bending the art under it](docs/goo-and-lens.gif)
 
+## Locust, built on it
+
+This is the glass [Locust](https://locust.lol) is drawn on: the sidebar on a floating panel of Apple's glass, the window buttons in its corner, and here **Rainbow** under the glass.
+
+![Locust's home screen on Liquid glass with the Rainbow under it](docs/locust-rainbow.png)
+
+![Locust's Settings on Liquid glass with the Rainbow under it](docs/locust-rainbow-settings.png)
+
 Made for **[Locust](https://locust.lol)**, the free app that puts Claude Code, Codex, Gemini, Cursor, Copilot and OpenCode on one team on your own computer. This is the glass its Mac look is built on, given away.
 
 ## What you get
@@ -84,6 +92,7 @@ The window's glass shows the desktop. A lens and goo bend and frost **what the p
 
 - `glassWindowOptions()`: `BrowserWindow` options for a glass window.
 - `applyGlass(win, { style, backdrop })`: puts the window on glass and answers the page's panels. `style: 'clear'` is macOS's more transparent glass. `backdrop` puts a picture under the glass inside the window, for screenshots and tests.
+- `RAINBOW`: a painting of soft colour to put under the glass, so the window glows the same over any desktop: `applyGlass(win, { backdrop: RAINBOW })`. Try it with `npm run demo -- --rainbow`.
 - `removeGlass(win)`: back to the sidebar material.
 - `placePanel(win, name, rect | null)`: place a panel yourself. `watchPanels` usually does it for you.
 - `glassSupported()`: true on macOS 26+ with the addon built.

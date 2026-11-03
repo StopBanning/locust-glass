@@ -4,7 +4,7 @@ import { app, BrowserWindow } from 'electron'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { applyGlass, glassSupported, glassWindowOptions } from '../src/main.js'
+import { applyGlass, glassSupported, glassWindowOptions, RAINBOW } from '../src/main.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const capture = process.argv.includes('--capture')
@@ -22,8 +22,9 @@ app.whenReady().then(() => {
   })
   win.loadFile(join(here, 'index.html'), { query: capture ? { capture: '1' } : {} })
   win.webContents.once('did-finish-load', () => {
-    // LOCUST_GLASS_BACKDROP puts a picture under the glass inside the window, for screenshots of a known desktop.
-    const drawn = applyGlass(win, { backdrop: process.env.LOCUST_GLASS_BACKDROP })
+    // --rainbow puts the Rainbow under the glass; LOCUST_GLASS_BACKDROP any picture, for screenshots of a known desktop.
+    const backdrop = process.argv.includes('--rainbow') ? RAINBOW : process.env.LOCUST_GLASS_BACKDROP
+    const drawn = applyGlass(win, { backdrop })
     console.log(`locust-glass demo: native glass ${glassSupported() ? (drawn ? 'on' : 'offered but not drawn') : 'not on this system'}`)
     if (capture) win.showInactive()
     else win.show()

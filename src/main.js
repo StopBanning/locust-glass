@@ -14,6 +14,12 @@ import { fileURLToPath } from 'node:url'
 const here = dirname(fileURLToPath(import.meta.url))
 const CHANNEL = 'locust-glass:panel'
 
+/**
+ * Rainbow: a painting of soft colour to put under the glass (applyGlass(win, { backdrop: RAINBOW })), so the window
+ * glows the same over any desktop, a dark one included. Locust's "Behind the glass > Rainbow".
+ */
+export const RAINBOW = join(here, 'rainbow.jpg').replace('app.asar', 'app.asar.unpacked')
+
 /** The window buttons inside a floating sidebar panel's corner, centred on a 50px title bar. */
 export const TRAFFIC_LIGHTS = Object.freeze({ x: 20, y: 18 })
 
@@ -58,8 +64,8 @@ const drawn = new WeakSet()
 
 /**
  * Puts the window on macOS's glass. Returns true when it is drawn on glass now. `style`: 'regular' (default), or
- * 'clear', macOS's more transparent glass. `backdrop`: a picture put under the glass inside the window, for
- * screenshots and tests only. Answers the page's panels from then on.
+ * 'clear', macOS's more transparent glass. `backdrop`: a picture put under the glass inside the window -- RAINBOW,
+ * or your own -- instead of the desktop. Answers the page's panels from then on.
  */
 export function applyGlass(win, { style = 'regular', backdrop } = {}) {
   const glass = native()

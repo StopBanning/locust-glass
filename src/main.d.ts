@@ -10,6 +10,8 @@ export interface PanelRect {
   readonly followHeight?: boolean
 }
 
+/** A painting of soft colour to put under the glass: applyGlass(win, { backdrop: RAINBOW }). */
+export const RAINBOW: string
 /** The window buttons inside a floating sidebar panel's corner. */
 export const TRAFFIC_LIGHTS: Readonly<{ x: number; y: number }>
 export const PANEL_CHANNEL: string
