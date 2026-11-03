@@ -32,6 +32,7 @@ jobs:
           Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' | Select-Object EnableTransparency | Format-List
           query session 2>$null
           "Session: $([System.Diagnostics.Process]::GetCurrentProcess().SessionId)"
+          exit 0
       - name: The demo on Acrylic, over a colourful window, taken through the system
         shell: pwsh
         run: |
