@@ -1,6 +1,6 @@
 # locust-glass
 
-**Liquid glass for Electron.** Apple's real glass under your window on macOS 26, and the bubbly part on every system: a lens that bends what is behind it, buttons that melt into each other like drops of water, and light that follows the pointer. Free and open source (MIT).
+**Liquid glass for Electron.** Apple's real glass under your window on macOS 26, Windows' Acrylic on Windows 11, and the bubbly part on every system: a lens that bends what is behind it, buttons that melt into each other like drops of water, and light that follows the pointer. Free and open source (MIT).
 
 ![The locust-glass demo: a sidebar on macOS's real Liquid Glass, a gooey toolbar, and a glass drop bending the art under it](docs/hero.png)
 
@@ -18,17 +18,19 @@ Made for **[Locust](https://locust.lol)**, the free app that puts Claude Code, C
 
 ## What you get
 
-| | macOS 26+ | macOS 11–15, Windows, Linux |
-| --- | --- | --- |
-| The window on Apple's glass (`NSGlassEffectView`) | yes | falls back to the window as you made it |
-| Floating panels of real glass where your page says | yes | the page's own frost stands in |
-| Window buttons inside the sidebar panel's corner | yes | n/a |
-| Lens: the backdrop bends at the rim, with a prism fringe | yes | yes (any Chromium) |
-| Goo: shapes melt together and drip apart | yes | yes |
-| Squishy buttons, pointer-lit shine, lit rims | yes | yes |
-| Light and dark, reduced motion | yes | yes |
+| | macOS 26+ | Windows 11 22H2+ | macOS 11–15, Windows 10, Linux |
+| --- | --- | --- | --- |
+| The window on the system's glass | Apple's (`NSGlassEffectView`) | Acrylic, or Mica | falls back to the window as you made it |
+| Floating panels where your page says | real glass under each | the page's rim over the Acrylic | the page's own frost |
+| Window buttons inside the sidebar panel's corner | yes | n/a | n/a |
+| Lens: the backdrop bends at the rim, with a prism fringe | yes | yes | yes (any Chromium) |
+| Goo: shapes melt together and drip apart | yes | yes | yes |
+| Squishy buttons, pointer-lit shine, lit rims | yes | yes | yes |
+| Light and dark, reduced motion | yes | yes | yes |
 
-Nobody's code was copied: the native part is ~200 lines of Objective-C over Apple's public API, and the page part is plain DOM, canvas and SVG filters. Tested on macOS 26 with Electron 44; the page layer has no platform code of its own, only Chromium features.
+Nobody's code was copied: the native part is ~200 lines of Objective-C over Apple's public API, Windows' glass is Electron's own `setBackgroundMaterial`, and the page part is plain DOM, canvas and SVG filters. Tested on macOS 26 with Electron 44, and on Windows 11 24H2 (Windows Server 2025, build 26100) and Ubuntu 24.04 by the **screens** workflow, which runs the demo over a window of colour stripes and takes the screen through the system. The page layer has no platform code of its own, only Chromium features.
+
+On Windows the blur is the graphics card's: with no card (as on CI's virtual machines), or with **Transparency effects** off in Settings, Windows paints Acrylic's plain stand-in colour instead, and the page reads as a dark or light frosted window. Acrylic is tinted by your app's theme, so set `nativeTheme.themeSource` to match your page.
 
 ## Install
 
@@ -54,7 +56,7 @@ app.whenReady().then(() => {
     webPreferences: { preload: new URL('./preload.cjs', import.meta.url).pathname }
   })
   win.loadFile('index.html')
-  win.webContents.once('did-finish-load', () => applyGlass(win))   // true on macOS 26+, false elsewhere
+  win.webContents.once('did-finish-load', () => applyGlass(win))   // true on macOS 26+ and Windows 11 22H2+, false elsewhere
 })
 ```
 
@@ -91,11 +93,11 @@ The window's glass shows the desktop. A lens and goo bend and frost **what the p
 ### Main process (`locust-glass`)
 
 - `glassWindowOptions()`: `BrowserWindow` options for a glass window.
-- `applyGlass(win, { style, backdrop })`: puts the window on glass and answers the page's panels. `style: 'clear'` is macOS's more transparent glass. `backdrop` puts a picture under the glass inside the window, for screenshots and tests.
+- `applyGlass(win, { style, backdrop, windowsMaterial })`: puts the window on glass and answers the page's panels. `style: 'clear'` is macOS's more transparent glass. `backdrop` puts a picture under the glass inside the window, for screenshots and tests (macOS: Windows' glass shows what is behind the window). `windowsMaterial: 'mica'` asks Windows for its quieter, wallpaper-tinted Mica instead of Acrylic.
 - `RAINBOW`: a painting of soft colour to put under the glass, so the window glows the same over any desktop: `applyGlass(win, { backdrop: RAINBOW })`. Try it with `npm run demo -- --rainbow`.
-- `removeGlass(win)`: back to the sidebar material.
+- `removeGlass(win)`: back to the sidebar material (macOS) or no material (Windows).
 - `placePanel(win, name, rect | null)`: place a panel yourself. `watchPanels` usually does it for you.
-- `glassSupported()`: true on macOS 26+ with the addon built.
+- `glassSupported()`: true on macOS 26+ with the addon built, and on Windows 11 22H2+. `glassKind()` says which: `'mac'`, `'windows'` or `null`.
 
 ### Page (`locust-glass/renderer`)
 
@@ -122,6 +124,7 @@ Drag the drop of glass over the art, press **Add a drop**, and hover the buttons
 ## How it works
 
 - **Real glass.** macOS 26 made `NSGlassEffectView` public. Electron has no option for it, so the addon puts one behind the page for the window's ground, and more for each panel, at the rectangles the page measures. The page paints nothing there, so the glass shows through. The class is looked up by name, so the addon builds on older SDKs and simply says "not here" on older macOS.
+- **Windows.** Windows 11's window manager blurs what is behind a window itself (Acrylic), and Electron reaches it with `setBackgroundMaterial`. The window's background goes clear so the Acrylic shows through, `<html data-glass-drawn="windows">` tells the page, and the page draws its panels' rims and tint over it. Windows has no second pane of glass inside a window, so a floating panel is the page's, which reads the same.
 - **Lens.** A displacement map for the element's rounded shape is drawn on a canvas once per size: near the rim each pixel looks further inward, steepest at the edge. An SVG `feDisplacementMap` applies it to the backdrop through `backdrop-filter: url(#…)`, three times with slightly different strengths when `dispersion` is on, so red, green and blue bend apart like a prism.
 - **Goo.** The children's shapes are drawn blurred onto a canvas and cut at half strength, so where two blurs overlap they add up and join (metaballs). The result masks a frosted sheet under the children, a highlight layer, and a lit top rim (the shape less itself moved down 1.5 px).
 
