@@ -1,15 +1,33 @@
 // The locust-glass demo: `npm run demo`. On macOS 26 the window sits on Apple's real glass with a floating sidebar
-// panel; everywhere, the toolbar melts together, the bubble bends what is under it, and the buttons squish.
-import { app, BrowserWindow } from 'electron'
+// panel; on Windows 11 on Acrylic; everywhere, the toolbar melts together, the bubble bends what is under it, and the
+// buttons squish.
+//
+//   --rainbow            the Rainbow under the glass (macOS)
+//   --capture            the frame worth a screenshot, shown behind other windows (macOS: scripts/capture.sh takes it)
+//   --screenshot <file>  Windows and Linux: a colourful window behind the demo, the whole screen taken through the
+//                        system after the glass has drawn, written to <file>, then quit (CI's proof the glass works)
+import { app, BrowserWindow, desktopCapturer, screen } from 'electron'
+import { writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
-import { applyGlass, glassSupported, glassWindowOptions, RAINBOW } from '../src/main.js'
+import { applyGlass, glassKind, glassWindowOptions, RAINBOW } from '../src/main.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const capture = process.argv.includes('--capture')
+const screenshotAt = process.argv.indexOf('--screenshot')
+const screenshot = screenshotAt >= 0 ? process.argv[screenshotAt + 1] : undefined
 
-app.whenReady().then(() => {
+/** A window of the Rainbow, filling the screen behind the demo: something for the glass to blur. */
+function backdropWindow() {
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize
+  const back = new BrowserWindow({ width, height, x: 0, y: 0, frame: false, show: true, focusable: false, skipTaskbar: true })
+  back.loadURL(`data:text/html,<body style="margin:0;background:url('${pathToFileURL(RAINBOW).href}') center/cover"></body>`)
+  return back
+}
+
+app.whenReady().then(async () => {
+  if (screenshot !== undefined) backdropWindow()
   const win = new BrowserWindow({
     ...glassWindowOptions(),
     width: 1180,
@@ -20,14 +38,24 @@ app.whenReady().then(() => {
     title: 'locust-glass',
     webPreferences: { preload: join(here, 'preload.cjs'), contextIsolation: true, sandbox: false }
   })
-  win.loadFile(join(here, 'index.html'), { query: capture ? { capture: '1' } : {} })
-  win.webContents.once('did-finish-load', () => {
+  win.loadFile(join(here, 'index.html'), { query: capture || screenshot !== undefined ? { capture: '1' } : {} })
+  win.webContents.once('did-finish-load', async () => {
     // --rainbow puts the Rainbow under the glass; LOCUST_GLASS_BACKDROP any picture, for screenshots of a known desktop.
     const backdrop = process.argv.includes('--rainbow') ? RAINBOW : process.env.LOCUST_GLASS_BACKDROP
     const drawn = applyGlass(win, { backdrop })
-    console.log(`locust-glass demo: native glass ${glassSupported() ? (drawn ? 'on' : 'offered but not drawn') : 'not on this system'}`)
+    console.log(`locust-glass demo: ${glassKind() ?? 'no system'} glass ${drawn ? 'on' : 'not drawn'} (${process.platform} ${process.getSystemVersion()})`)
     if (capture) win.showInactive()
     else win.show()
+    if (screenshot === undefined) return
+    win.center()
+    await new Promise((resolve) => setTimeout(resolve, 4000))
+    const size = screen.getPrimaryDisplay().size
+    const scale = screen.getPrimaryDisplay().scaleFactor
+    const [source] = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: size.width * scale, height: size.height * scale } })
+    if (source === undefined) throw new Error('no screen to take')
+    writeFileSync(screenshot, source.thumbnail.toPNG())
+    console.log(`locust-glass demo: wrote ${screenshot}`)
+    app.quit()
   })
 })
 

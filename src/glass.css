@@ -58,7 +58,9 @@
   backdrop-filter: var(--lg-frost);
 }
 
-:root[data-glass-drawn] .lg-panel[data-glass-panel] {
+/* On a Mac a panel has its own pane of Apple's glass under it, so the page draws nothing there. On Windows the whole
+   window is one sheet of Acrylic: the panel keeps its tint and lit rim, which is what sets it apart. */
+:root[data-glass-drawn='mac'] .lg-panel[data-glass-panel] {
   background: transparent;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;

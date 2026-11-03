@@ -5,9 +5,9 @@ const { contextBridge, ipcRenderer } = require('electron')
 const api = {
   /** Places a floating glass panel by name, at a rectangle from the window's top left, or takes it away (null). */
   place: (name, rect) => ipcRenderer.send('locust-glass:panel', String(name), rect ?? null),
-  /** Calls back with true when the window goes onto glass, false when it comes off. */
+  /** Calls back with the glass the window went onto ('mac' or 'windows'), or false when it comes off. */
   onDrawn: (callback) => {
-    const listener = (_event, drawn) => callback(Boolean(drawn))
+    const listener = (_event, drawn) => callback(drawn === 'mac' || drawn === 'windows' ? drawn : drawn === true ? 'mac' : false)
     ipcRenderer.on('locust-glass:drawn', listener)
     return () => ipcRenderer.removeListener('locust-glass:drawn', listener)
   },

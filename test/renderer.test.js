@@ -40,3 +40,15 @@ test('goo cuts a blur at about half: overlapping blurs join, a lone faint one va
   assert.ok(out[3] > 0 && out[3] < 255, 'a soft pixel at the cut, not a stair step')
   assert.deepEqual(out.slice(4), [255, 255, 255])
 })
+
+import { windowsMaterialSupported } from '../src/platform.js'
+
+test('Windows glass is offered from Windows 11 22H2 (build 22621) on, and nowhere else', () => {
+  assert.equal(windowsMaterialSupported('win32', '10.0.22621'), true)
+  assert.equal(windowsMaterialSupported('win32', '10.0.26100'), true)
+  assert.equal(windowsMaterialSupported('win32', '10.0.22000'), false, 'Windows 11 21H2 has no Acrylic for apps')
+  assert.equal(windowsMaterialSupported('win32', '10.0.20348'), false, 'Windows Server 2022')
+  assert.equal(windowsMaterialSupported('win32', 'garbage'), false)
+  assert.equal(windowsMaterialSupported('darwin', '25.0.0'), false)
+  assert.equal(windowsMaterialSupported('linux', '6.8.0'), false)
+})

@@ -355,6 +355,10 @@ export function glassPage() {
     const g = goo(node)
     stops.push(g.stop)
   }
-  globalThis.locustGlass?.onDrawn?.((drawn) => document.documentElement.toggleAttribute('data-glass-drawn', drawn))
+  // 'mac' or 'windows': the page clears its ground over the system's glass, and on a Mac its panels too.
+  globalThis.locustGlass?.onDrawn?.((drawn) => {
+    if (drawn) document.documentElement.setAttribute('data-glass-drawn', drawn)
+    else document.documentElement.removeAttribute('data-glass-drawn')
+  })
   return () => { for (const stop of stops) stop() }
 }

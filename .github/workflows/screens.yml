@@ -1,0 +1,58 @@
+# The demo on a real Windows and a real Linux, with a screenshot of each screen taken through the system -- the proof
+# that the glass draws there, not only on the Mac it was made on. Started by hand only (Actions > screens > Run).
+name: screens
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    # Windows Server 2025 is built on Windows 11 24H2 (build 26100): Acrylic is drawn there.
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - name: Transparency effects on, as a person's Windows has them
+        shell: pwsh
+        run: |
+          New-Item -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Force | Out-Null
+          Set-ItemProperty -Path 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize' -Name EnableTransparency -Value 1 -Type DWord
+      - name: The demo on Acrylic, over a colourful window, taken through the system
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force shots | Out-Null
+          npx electron demo/main.mjs --screenshot shots/windows.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows
+          path: shots/
+
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: sudo apt-get update && sudo apt-get install -y xvfb libgtk-3-0 libnss3 libasound2t64 libgbm1 libxss1
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - name: The demo with the page's own glass, taken through the system
+        run: |
+          mkdir -p shots
+          xvfb-run -a -s "-screen 0 1440x900x24" npx electron demo/main.mjs --screenshot shots/linux.png --no-sandbox
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux
+          path: shots/

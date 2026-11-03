@@ -1,15 +1,25 @@
-// locust-glass, the main process: the window on macOS's own glass, and floating panels of it where the page says.
+// locust-glass, the main process: the window on the system's own glass, and floating panels of it where the page says.
 //
 //   import { glassWindowOptions, applyGlass } from 'locust-glass'
 //   const win = new BrowserWindow({ ...glassWindowOptions(), width: 1100, height: 720 })
-//   applyGlass(win)                       // macOS 26+: real NSGlassEffectView; elsewhere: false, and nothing changes
+//   applyGlass(win)   // macOS 26+: Apple's NSGlassEffectView; Windows 11 22H2+: Acrylic; elsewhere: false
+//
+// WINDOWS (0.2). Apple's glass is the window server blurring and bending whatever is behind the window. Windows' own
+// window manager does the first half -- Acrylic, the desktop and the windows behind blurred through the window -- and
+// Electron reaches it (setBackgroundMaterial). The bend at the rim, the lit edges, the shine and the goo are the page's
+// own here on every system (locust-glass/renderer), so the two halves together read as the same glass. What Windows
+// cannot do is a second pane of glass inside the window: a floating panel is the page leaving the ground clear there
+// and drawing the rim, which is how the Mac's panel reads anyway.
 //
 // The page then marks its panels with data-glass-panel (see locust-glass/renderer), and they float on real glass.
 // Written for Locust (https://locust.lol). MIT licensed.
 import { ipcMain } from 'electron'
 import { createRequire } from 'node:module'
+import { release } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+import { windowsMaterialSupported as windowsMaterialAt } from './platform.js'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const CHANNEL = 'locust-glass:panel'
@@ -39,9 +49,21 @@ function native() {
   return addon
 }
 
-/** True on a Mac with macOS's Liquid Glass (macOS 26 and later) and a built addon. */
+/** Windows 11 22H2 (build 22621) and later: where the window manager draws Acrylic and Mica (./platform.js). */
+export function windowsMaterialSupported(platform = process.platform, osRelease = release()) {
+  return windowsMaterialAt(platform, osRelease)
+}
+
+/** Which system glass this computer has: 'mac' (macOS 26+), 'windows' (Windows 11 22H2+), or null. */
+export function glassKind() {
+  if (native() !== null) return 'mac'
+  if (windowsMaterialSupported()) return 'windows'
+  return null
+}
+
+/** True where the system draws glass behind the window: macOS 26+ with the addon built, or Windows 11 22H2+. */
 export function glassSupported() {
-  return native() !== null
+  return glassKind() !== null
 }
 
 /**
@@ -50,6 +72,8 @@ export function glassSupported() {
  * glass, so the window is never opaque. Elsewhere: the plain options, for the page layer alone.
  */
 export function glassWindowOptions() {
+  // Windows: clear behind the page from the first frame, so Acrylic has nothing opaque to sit under.
+  if (process.platform === 'win32') return { backgroundColor: '#00000000' }
   if (process.platform !== 'darwin') return { backgroundColor: '#00000000' }
   return {
     titleBarStyle: 'hiddenInset',
@@ -63,13 +87,27 @@ export function glassWindowOptions() {
 const drawn = new WeakSet()
 
 /**
- * Puts the window on macOS's glass. Returns true when it is drawn on glass now. `style`: 'regular' (default), or
- * 'clear', macOS's more transparent glass. `backdrop`: a picture put under the glass inside the window -- RAINBOW,
- * or your own -- instead of the desktop. Answers the page's panels from then on.
+ * Puts the window on the system's glass. Returns true when it is drawn on glass now. `style`: 'regular' (default), or
+ * 'clear', the more transparent glass (on Windows, Acrylic either way; `windowsMaterial: 'mica'` asks for Windows'
+ * quieter, wallpaper-tinted Mica instead). `backdrop`: a picture put under the glass inside the window -- RAINBOW,
+ * or your own -- instead of the desktop (macOS only: Windows' glass shows what is behind the window). Answers the
+ * page's panels from then on.
  */
-export function applyGlass(win, { style = 'regular', backdrop } = {}) {
+export function applyGlass(win, { style = 'regular', backdrop, windowsMaterial = 'acrylic' } = {}) {
+  if (win.isDestroyed()) return false
+  if (glassKind() === 'windows') {
+    try {
+      win.setBackgroundColor('#00000000')
+      win.setBackgroundMaterial(windowsMaterial === 'mica' ? 'mica' : 'acrylic')
+    } catch {
+      return false
+    }
+    drawn.add(win)
+    win.webContents.send('locust-glass:drawn', 'windows')
+    return true
+  }
   const glass = native()
-  if (glass === null || win.isDestroyed()) return false
+  if (glass === null) return false
   const handle = win.getNativeWindowHandle()
   try {
     // The material first: left on, it draws over the glass and blurs it again.
@@ -82,14 +120,25 @@ export function applyGlass(win, { style = 'regular', backdrop } = {}) {
   }
   drawn.add(win)
   listen()
-  win.webContents.send('locust-glass:drawn', true)
+  win.webContents.send('locust-glass:drawn', 'mac')
   return true
 }
 
 /** Takes the window off the glass and puts the sidebar material back. */
 export function removeGlass(win) {
+  if (win.isDestroyed() || !drawn.has(win)) return
+  if (glassKind() === 'windows') {
+    try {
+      win.setBackgroundMaterial('none')
+    } catch {
+      // Already plain.
+    }
+    drawn.delete(win)
+    win.webContents.send('locust-glass:drawn', false)
+    return
+  }
   const glass = native()
-  if (glass === null || win.isDestroyed() || !drawn.has(win)) return
+  if (glass === null) return
   try {
     glass.detach(win.getNativeWindowHandle())
   } catch {
