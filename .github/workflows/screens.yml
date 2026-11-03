@@ -38,6 +38,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force shots | Out-Null
           npx electron demo/main.mjs --screenshot shots/windows.png
+          npx electron demo/main.mjs --screenshot shots/windows-frameless.png --frameless
       - uses: actions/upload-artifact@v4
         if: always()
         with:

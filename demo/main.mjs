@@ -4,6 +4,7 @@
 //
 //   --rainbow            the Rainbow under the glass (macOS)
 //   --capture            the frame worth a screenshot, shown behind other windows (macOS: scripts/capture.sh takes it)
+//   --frameless          the window with no system title bar, as apps that draw their own make it
 //   --screenshot <file>  Windows and Linux: a window of colour stripes behind the demo, the whole screen taken through the
 //                        system after the glass has drawn, written to <file>, then quit (CI's proof the glass works)
 import { app, BrowserWindow, desktopCapturer, nativeTheme, screen } from 'electron'
@@ -17,6 +18,8 @@ const here = dirname(fileURLToPath(import.meta.url))
 const capture = process.argv.includes('--capture')
 const screenshotAt = process.argv.indexOf('--screenshot')
 const screenshot = screenshotAt >= 0 ? process.argv[screenshotAt + 1] : undefined
+// --frameless: the window as apps that draw their own title bar make it (frame: false), for the screens workflow.
+const frameless = process.argv.includes('--frameless')
 
 /**
  * A window of sharp colour stripes filling the screen behind the demo: something for the glass to blur, where a blur
@@ -38,6 +41,7 @@ app.whenReady().then(async () => {
   const work = screen.getPrimaryDisplay().workAreaSize
   const win = new BrowserWindow({
     ...glassWindowOptions(),
+    ...(frameless ? { frame: false, titleBarStyle: 'hidden', titleBarOverlay: false } : {}),
     width: screenshot === undefined ? 1180 : Math.min(1180, work.width - 160),
     height: screenshot === undefined ? 760 : Math.min(760, work.height - 120),
     minWidth: 760,
