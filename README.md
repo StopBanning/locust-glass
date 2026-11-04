@@ -6,6 +6,12 @@
 
 ![Buttons melting together and a drop of glass bending the art under it](docs/goo-and-lens.gif)
 
+## On Windows 11
+
+The same demo on Windows 11 24H2, taken by the **screens** workflow: Windows' own buttons over the page, the lens bending the art, the toolbar melted into one sheet, and the Rainbow under the sidebar's frosted panel.
+
+![The locust-glass demo on Windows 11: a frosted sidebar over the Rainbow, a gooey toolbar, a glass drop bending the art, and Windows' window buttons at the top right](docs/windows.png)
+
 ## Locust, built on it
 
 This is the glass [Locust](https://locust.lol) is drawn on: the sidebar on a floating panel of Apple's glass, the window buttons in its corner, and here **Rainbow** under the glass.
@@ -22,7 +28,8 @@ Made for **[Locust](https://locust.lol)**, the free app that puts Claude Code, C
 | --- | --- | --- | --- |
 | The window on the system's glass | Apple's (`NSGlassEffectView`) | Acrylic, or Mica | falls back to the window as you made it |
 | Floating panels where your page says | real glass under each | the page's rim over the Acrylic | the page's own frost |
-| Window buttons inside the sidebar panel's corner | yes | n/a | n/a |
+| Title bar hidden, the system's buttons over the page | yes, inside the sidebar panel's corner | yes, Windows' own at the top right | n/a |
+| A picture under the glass (`backdrop`, `RAINBOW`) | under Apple's glass | painted by the page, frosted by the panels | n/a |
 | Lens: the backdrop bends at the rim, with a prism fringe | yes | yes | yes (any Chromium) |
 | Goo: shapes melt together and drip apart | yes | yes | yes |
 | Squishy buttons, pointer-lit shine, lit rims | yes | yes | yes |
@@ -92,8 +99,8 @@ The window's glass shows the desktop. A lens and goo bend and frost **what the p
 
 ### Main process (`locust-glass`)
 
-- `glassWindowOptions()`: `BrowserWindow` options for a glass window.
-- `applyGlass(win, { style, backdrop, windowsMaterial })`: puts the window on glass and answers the page's panels. `style: 'clear'` is macOS's more transparent glass. `backdrop` puts a picture under the glass inside the window, for screenshots and tests (macOS: Windows' glass shows what is behind the window). `windowsMaterial: 'mica'` asks Windows for its quieter, wallpaper-tinted Mica instead of Acrylic.
+- `glassWindowOptions()`: `BrowserWindow` options for a glass window: the title bar hidden, with the Mac's buttons inside the sidebar panel's corner and Windows' own over the page's top right (keep that corner clear).
+- `applyGlass(win, { style, backdrop, windowsMaterial })`: puts the window on glass and answers the page's panels. `style: 'clear'` is macOS's more transparent glass. `backdrop` puts a picture under the glass inside the window, so it glows the same over any desktop: on a Mac under Apple's glass, on Windows painted by the page under everything (the page's Content-Security-Policy must allow `img-src file:`). `windowsMaterial: 'mica'` asks Windows for its quieter, wallpaper-tinted Mica instead of Acrylic.
 - `RAINBOW`: a painting of soft colour to put under the glass, so the window glows the same over any desktop: `applyGlass(win, { backdrop: RAINBOW })`. Try it with `npm run demo -- --rainbow`.
 - `removeGlass(win)`: back to the sidebar material (macOS) or no material (Windows).
 - `placePanel(win, name, rect | null)`: place a panel yourself. `watchPanels` usually does it for you.
@@ -119,7 +126,13 @@ npm install
 npm run demo
 ```
 
-Drag the drop of glass over the art, press **Add a drop**, and hover the buttons.
+Drag the drop of glass over the art, press **Add a drop**, and hover the buttons. `npm run demo -- --rainbow` puts the Rainbow under it.
+
+## Tested on every system
+
+`npx electron demo/main.mjs --check` tests every piece in the page wherever it runs and fails on any miss: the page knows its glass and clears its ground, panels are glass (real on a Mac, the page's own elsewhere) with a lit rim, both lenses have their maps and bend in three colours, the toolbar's sheet melts two near buttons into one and stays clear between them, a new drop drips out and the sheet reshapes, the light follows the pointer, and the buttons spring (or hold still when the system asks for less motion). With `--rainbow` on Windows it also checks the picture is painted and loads.
+
+The **screens** workflow (Actions, run by hand) runs those checks on Windows 11 24H2 and Ubuntu 24.04 and takes the screen through the system; the Mac runs them locally. Every system passes all of them.
 
 ## How it works
 
