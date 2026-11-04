@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: file:" />
+    <title>locust-glass</title>
+    <link rel="stylesheet" href="node_modules/locust-glass/src/glass.css" />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <aside class="lg-panel" data-glass-panel="sidebar" data-glass-follow>Sidebar</aside>
+
+    <main>
+      <div class="toolbar" data-goo>
+        <button class="lg-pill">Back</button>
+        <button class="lg-pill">Forward</button>
+      </div>
+      <div class="art">
+        <div class="card lg-surface" data-lens data-shine>A drop of glass</div>
+      </div>
+    </main>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

@@ -1,4 +1,5 @@
 node_modules/
-build/
+build/*
+!build/glass.node
 .DS_Store
 *.log

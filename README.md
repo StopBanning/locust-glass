@@ -45,35 +45,42 @@ On Windows the blur is the graphics card's: with no card (as on CI's virtual mac
 npm install github:StopBanning/locust-glass
 ```
 
-On a Mac the install builds a small native addon with `clang` (Xcode's command line tools); there is no `node-gyp` and nothing to download. Anywhere else it builds nothing, and everything on the page still works.
+The Mac's native part comes built, for both chips, so there is nothing to compile and no Xcode needed. Anywhere else there is no native part, and everything on the page still works.
 
 ## Use it
 
-**Main process**: make the window, then put it on glass.
+A whole working app, with no bundler, is in [`examples/plain`](examples/plain): `cd examples/plain && npm install && npm start`. CI runs it on Windows and Linux, and checks every piece of the glass in it. Here is what it does.
+
+**Main process**: make the window with the glass's preload, then put it on glass.
 
 ```js
 import { app, BrowserWindow } from 'electron'
-import { glassWindowOptions, applyGlass } from 'locust-glass'
+import { applyGlass, glassWindowOptions, PRELOAD } from 'locust-glass'
 
 app.whenReady().then(() => {
   const win = new BrowserWindow({
-    ...glassWindowOptions(),          // hidden inset title bar, buttons where the sidebar panel's corner will be
-    width: 1100,
-    height: 720,
-    webPreferences: { preload: new URL('./preload.cjs', import.meta.url).pathname }
+    ...glassWindowOptions(),          // the title bar hidden, the system's window buttons over the page
+    width: 1000,
+    height: 640,
+    webPreferences: { preload: PRELOAD }
   })
   win.loadFile('index.html')
   win.webContents.once('did-finish-load', () => applyGlass(win))   // true on macOS 26+ and Windows 11 22H2+, false elsewhere
 })
 ```
 
-**Preload**: one line.
+**Already have a preload?** Keep it, and add the glass's beside it before the window loads:
 
 ```js
-require('locust-glass/preload')
+import { session } from 'electron'
+import { registerGlassPreload } from 'locust-glass'
+
+registerGlassPreload(session.defaultSession)   // inside app.whenReady(), before new BrowserWindow
 ```
 
-**Page**: mark what floats, then turn it on.
+The glass's preload only needs Electron itself, so it works in Electron's default sandbox. (Requiring `locust-glass/preload` from inside your own preload does not, unless a bundler builds that preload.)
+
+**Page**: mark what floats, then turn it on from a script file.
 
 ```html
 <link rel="stylesheet" href="node_modules/locust-glass/src/glass.css">
@@ -87,13 +94,38 @@ require('locust-glass/preload')
 
 <div class="card" data-lens data-shine>…</div>                                   <!-- bends what is behind it -->
 
-<script type="module">
-  import { glassPage } from 'locust-glass/renderer'
-  glassPage()
-</script>
+<script type="module" src="app.js"></script>
 ```
 
+```js
+// app.js
+import { glassPage } from './node_modules/locust-glass/src/renderer.js'
+
+glassPage()
+```
+
+A plain page has no package names to import by, so it imports the file by its path. Put the toolbar's buttons about 5px apart or closer and they melt into one sheet.
+
 The window's glass shows the desktop. A lens and goo bend and frost **what the page draws behind them**, so put them over content: a photo, a list, a document scrolling underneath, as Apple's own toolbars float over it.
+
+### With a bundler (Vite, electron-vite, webpack, esbuild)
+
+Use the package names, and the bundler finds the files:
+
+```js
+import 'locust-glass/glass.css'
+import { glassPage } from 'locust-glass/renderer'
+
+glassPage()
+```
+
+If your bundler builds your preload too, you can `import 'locust-glass/preload'` in it instead of using `PRELOAD`.
+
+### Shipping your app
+
+Nothing extra to set. The Mac's native part loads from inside the app's asar or unpacked beside it, and a `backdrop` picture still packed in the asar is copied out for macOS to open. Tested in an app packaged by electron-builder, both as it unpacks by itself and with nothing unpacked.
+
+On Windows, `backdrop` is painted by the page, so its Content-Security-Policy must allow `img-src file:`.
 
 ## The pieces
 
@@ -104,13 +136,15 @@ The window's glass shows the desktop. A lens and goo bend and frost **what the p
 - `RAINBOW`: a painting of soft colour to put under the glass, so the window glows the same over any desktop: `applyGlass(win, { backdrop: RAINBOW })`. Try it with `npm run demo -- --rainbow`.
 - `removeGlass(win)`: back to the sidebar material (macOS) or no material (Windows).
 - `placePanel(win, name, rect | null)`: place a panel yourself. `watchPanels` usually does it for you.
-- `glassSupported()`: true on macOS 26+ with the addon built, and on Windows 11 22H2+. `glassKind()` says which: `'mac'`, `'windows'` or `null`.
+- `PRELOAD`: the path of the glass's preload script, for `webPreferences: { preload: PRELOAD }`.
+- `registerGlassPreload(session)`: runs the glass's preload in every window of a session, beside each window's own preload. Call it before the windows load.
+- `glassSupported()`: true on macOS 26+, and on Windows 11 22H2+. `glassKind()` says which: `'mac'`, `'windows'` or `null`.
 
 ### Page (`locust-glass/renderer`)
 
 - `watchPanels()`: every `[data-glass-panel="name"]` gets real glass placed under it, following its size and place. Optional `data-glass-radius`, `data-glass-style="clear"`, `data-glass-follow` (a full-height sidebar).
 - `lens(element, { bezel, strength, blur, saturate, dispersion })`: the backdrop bends within `bezel` px of the rim, on a circular bevel's curve, and splits into colour at the edge. Uses an SVG displacement map through `backdrop-filter`, which Chromium supports, so it works in every Electron app. Elsewhere it falls back to frost.
-- `goo(group, { melt, selector, blur, saturate })`: the group's children share one sheet of glass shaped like all of them: two that come within `melt` px grow a bridge and join, and pull apart with a neck. It redraws only while something in the group moves. Returns `{ wake, stop }`.
+- `goo(group, { melt, selector, blur, saturate })`: the group's children share one sheet of glass shaped like all of them: two that come close grow a bridge and join, and pull apart with a neck. At the default `melt` of 12, round buttons join up to about 5px apart; raise it to reach further. It redraws only while something in the group moves. Returns `{ wake, stop }`.
 - `shine()`: sets `--lg-x` / `--lg-y` under the pointer, so the highlight on `[data-shine]` glass follows it.
 - `glassPage()`: all of the above for `[data-glass-panel]`, `[data-lens]` and `[data-goo]`.
 
@@ -132,7 +166,7 @@ Drag the drop of glass over the art, press **Add a drop**, and hover the buttons
 
 `npx electron demo/main.mjs --check` tests every piece in the page wherever it runs and fails on any miss: the page knows its glass and clears its ground, panels are glass (real on a Mac, the page's own elsewhere) with a lit rim, both lenses have their maps and bend in three colours, the toolbar's sheet melts two near buttons into one and stays clear between them, a new drop drips out and the sheet reshapes, the light follows the pointer, and the buttons spring (or hold still when the system asks for less motion). With `--rainbow` on Windows it also checks the picture is painted and loads.
 
-The **screens** workflow (Actions, run by hand) runs those checks on Windows 11 24H2 and Ubuntu 24.04 and takes the screen through the system; the Mac runs them locally. Every system passes all of them.
+The **screens** workflow runs those checks on Windows 11 24H2 and Ubuntu 24.04 and takes the screen through the system; the Mac runs them locally. It runs the same checks on [`examples/plain`](examples/plain), installed as an app would install the package, so the setup above is tested too. Every system passes all of them.
 
 ## How it works
 

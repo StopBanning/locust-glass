@@ -1,0 +1,8 @@
+body { margin: 0; height: 100vh; font: 14px system-ui, sans-serif; color: #f2f2f2; display: flex; }
+aside { position: fixed; inset: 10px auto 10px 10px; width: 220px; padding: 56px 18px 18px; box-sizing: border-box; }
+main { margin-left: 240px; flex: 1; padding: 20px; position: relative; }
+.toolbar { position: absolute; top: 14px; left: 20px; display: flex; gap: 4px; z-index: 1; }
+.art { position: absolute; inset: 64px 20px 20px; border-radius: 18px;
+  background: repeating-linear-gradient(115deg, #ff2d95 0 40px, #00d0ff 40px 80px, #ffd400 80px 120px, #7a3cff 120px 160px); }
+.card { position: absolute; left: 60px; top: 60px; width: 280px; height: 170px; border-radius: 28px;
+  display: grid; place-items: center; font-weight: 600; }

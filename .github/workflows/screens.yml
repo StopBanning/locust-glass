@@ -51,6 +51,16 @@ jobs:
         run: |
           npx electron demo/main.mjs --screenshot shots/windows-sample.png --crop --rainbow
           if ($LASTEXITCODE -ne 0) { exit 1 }
+      # The README's own app, installing the package as an app does, with the same checks loaded ahead of its code.
+      - name: The README's app (examples/plain), checked
+        shell: pwsh
+        working-directory: examples/plain
+        run: |
+          npm install --no-audit --no-fund
+          $electron = node -p "require('electron')"
+          $env:NODE_OPTIONS = '--import=../../test/example-check.mjs'
+          & $electron . | Out-Host
+          if ($LASTEXITCODE -ne 0) { exit 1 }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -72,6 +82,11 @@ jobs:
         run: |
           mkdir -p shots
           xvfb-run -a -s "-screen 0 1440x900x24" npx electron demo/main.mjs --screenshot shots/linux.png --no-sandbox
+      - name: The README's app (examples/plain), checked
+        working-directory: examples/plain
+        run: |
+          npm install --no-audit --no-fund
+          NODE_OPTIONS=--import=../../test/example-check.mjs xvfb-run -a "$(node -p "require('electron')")" . --no-sandbox
       - uses: actions/upload-artifact@v4
         if: always()
         with:

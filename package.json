@@ -1,6 +1,6 @@
 {
   "name": "locust-glass",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Liquid glass for Electron: Apple's real glass under the window on macOS 26, plus a lens, gooey melting buttons and pointer-lit shine on every system. Made for Locust.",
   "type": "module",
   "main": "./src/main.js",
@@ -19,13 +19,14 @@
   "files": [
     "src",
     "native",
+    "build/glass.node",
     "scripts/build-native.cjs",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "install": "node scripts/build-native.cjs",
-    "build": "node scripts/build-native.cjs",
+    "build": "node scripts/build-native.cjs --force",
     "demo": "electron demo/main.mjs",
     "test": "node --test test/renderer.test.js"
   },

@@ -43,12 +43,13 @@ export const pageChecks = ({ kind, backdrop }) => `(async () => {
   ok('a panel has a lit rim', /inset/.test(css(panel, 'boxShadow')), css(panel, 'boxShadow').slice(0, 60))
 
   // The lens: an SVG displacement map applied to the backdrop.
-  const card = document.querySelector('.player[data-lens]')
+  const card = document.querySelector('.player[data-lens]') ?? document.querySelector('[data-lens]')
+  const lenses = document.querySelectorAll('[data-lens]').length
   ok('the lens bends what is behind it', /url\\(/.test(css(card, 'backdropFilter')), css(card, 'backdropFilter'))
   const passes = document.querySelectorAll('feDisplacementMap').length
-  ok('the lens splits its rim into colour (three passes a lens)', passes >= 6, passes + ' passes')
+  ok('the lens splits its rim into colour (three passes a lens)', passes >= 3 * lenses, passes + ' passes for ' + lenses + (lenses === 1 ? ' lens' : ' lenses'))
   const maps = [...document.querySelectorAll('feImage')].map((image) => image.getAttribute('href') || '')
-  ok('every lens has its map drawn', maps.length >= 2 && maps.every((href) => href.startsWith('data:image/png') && href.length > 2000), maps.map((href) => href.length).join(', ') + ' bytes')
+  ok('every lens has its map drawn', maps.length >= lenses && maps.every((href) => href.startsWith('data:image/png') && href.length > 2000), maps.map((href) => href.length).join(', ') + ' bytes')
 
   // Goo: one sheet of glass under the toolbar, shaped like its buttons, melting where two come close.
   const toolbar = document.querySelector('.toolbar')
@@ -79,13 +80,23 @@ export const pageChecks = ({ kind, backdrop }) => `(async () => {
   } else {
     ok('the sheet\\'s shape can be read', false, 'mask did not decode')
   }
+  // The demo's Add a drop button; any other page gets a button added to its toolbar, which the goo must take in.
   const before = mask
-  const drops = toolbar.querySelectorAll('.is-new').length
-  document.getElementById('drip').click()
-  await wait(1200)
-  ok('a new drop drips out of the sheet', toolbar.querySelectorAll('.is-new').length === drops + 1, (toolbar.querySelectorAll('.is-new').length - drops) + ' new')
-  ok('the sheet reshapes around it', (sheet.style.maskImage || sheet.style.webkitMaskImage) !== before, 'mask changed')
-  toolbar.querySelector('.is-new:last-of-type')?.remove()
+  const drip = document.getElementById('drip')
+  if (drip) {
+    const drops = toolbar.querySelectorAll('.is-new').length
+    drip.click()
+    await wait(1200)
+    ok('a new drop drips out of the sheet', toolbar.querySelectorAll('.is-new').length === drops + 1, (toolbar.querySelectorAll('.is-new').length - drops) + ' new')
+  } else {
+    const added = document.createElement('button')
+    added.className = 'lg-pill'
+    added.textContent = 'New'
+    toolbar.append(added)
+    await wait(1200)
+  }
+  ok('the sheet reshapes around a new button', (sheet.style.maskImage || sheet.style.webkitMaskImage) !== before, 'mask changed')
+  ;(drip ? toolbar.querySelector('.is-new:last-of-type') : toolbar.querySelector(':scope > .lg-pill:last-of-type'))?.remove()
 
   // Shine and squish.
   const box = card.getBoundingClientRect()

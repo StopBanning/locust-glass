@@ -1,4 +1,4 @@
-import type { BrowserWindow, BrowserWindowConstructorOptions } from 'electron'
+import type { BrowserWindow, BrowserWindowConstructorOptions, Session } from 'electron'
 
 export interface PanelRect {
   readonly x: number
@@ -15,6 +15,10 @@ export const RAINBOW: string
 /** The window buttons inside a floating sidebar panel's corner. */
 export const TRAFFIC_LIGHTS: Readonly<{ x: number; y: number }>
 export const PANEL_CHANNEL: string
+/** The glass's preload script: `webPreferences: { preload: PRELOAD }`. It needs only Electron, so it runs sandboxed. */
+export const PRELOAD: string
+/** Runs the glass's preload in every window of the session, beside each window's own preload. Call it before loading. */
+export function registerGlassPreload(session: Session): void
 /** True on macOS 26+ with the native addon built, and on Windows 11 22H2+. */
 export function glassSupported(): boolean
 /** Which system glass this computer has: 'mac' (macOS 26+), 'windows' (Windows 11 22H2+), or null. */

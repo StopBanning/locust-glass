@@ -1,5 +1,7 @@
 // locust-glass, the preload: what the page needs to tell the window where its glass panels go.
-//   require('locust-glass/preload')   // in your preload script, with contextIsolation on
+//   webPreferences: { preload: PRELOAD }   // from 'locust-glass': this file as the window's preload, sandboxed or not
+//   registerGlassPreload(session)          // or beside your own preload
+//   import 'locust-glass/preload'          // or in your own preload, when a bundler builds it
 const { contextBridge, ipcRenderer } = require('electron')
 
 const api = {

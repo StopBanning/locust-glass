@@ -209,9 +209,10 @@ export function lens(node, { bezel = 22, strength = 36, blur = 1.5, saturate = 1
 // so two that come close grow a bridge and become one, and come apart again with a neck, like drops of water.
 
 /**
- * Makes a group's children (default: its direct children) share one gooey sheet of glass. Options: `melt` (px: how
- * close two shapes must come to join, default 12), `selector` (which children count), `blur` and `saturate` (the
- * sheet's frost). Redraws only while something in the group moves. Returns the stop.
+ * Makes a group's children (default: its direct children) share one gooey sheet of glass. Options: `melt` (px of
+ * spread, default 12: round buttons up to about 5px apart join, flatter shapes from further; raise it to reach
+ * further), `selector` (which children count), `blur` and `saturate` (the sheet's frost). Redraws only while
+ * something in the group moves. Returns the stop.
  */
 export function goo(group, { melt = 12, selector = ':scope > *', blur = 16, saturate = 1.8 } = {}) {
   group.classList.add('lg-goo')

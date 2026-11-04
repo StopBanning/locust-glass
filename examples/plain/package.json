@@ -1,0 +1,16 @@
+{
+  "name": "locust-glass-example",
+  "private": true,
+  "description": "The smallest app on locust-glass, with no bundler: the README's example, run by CI on every system.",
+  "type": "module",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "locust-glass": "file:../.."
+  },
+  "devDependencies": {
+    "electron": "^44.7.0"
+  }
+}

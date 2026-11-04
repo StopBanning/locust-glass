@@ -1,7 +1,7 @@
 // locust-glass, the main process: the window on the system's own glass, and floating panels of it where the page says.
 //
-//   import { glassWindowOptions, applyGlass } from 'locust-glass'
-//   const win = new BrowserWindow({ ...glassWindowOptions(), width: 1100, height: 720 })
+//   import { glassWindowOptions, applyGlass, PRELOAD } from 'locust-glass'
+//   const win = new BrowserWindow({ ...glassWindowOptions(), width: 1100, height: 720, webPreferences: { preload: PRELOAD } })
 //   applyGlass(win)   // macOS 26+: Apple's NSGlassEffectView; Windows 11 22H2+: Acrylic; elsewhere: false
 //
 // WINDOWS (0.2). Apple's glass is the window server blurring and bending whatever is behind the window. Windows' own
@@ -14,9 +14,10 @@
 // The page then marks its panels with data-glass-panel (see locust-glass/renderer), and they float on real glass.
 // Written for Locust (https://locust.lol). MIT licensed.
 import { ipcMain, nativeTheme } from 'electron'
+import { copyFileSync, existsSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { release } from 'node:os'
-import { dirname, join } from 'node:path'
+import { release, tmpdir } from 'node:os'
+import { basename, dirname, join, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { windowsMaterialSupported as windowsMaterialAt } from './platform.js'
@@ -25,10 +26,52 @@ const here = dirname(fileURLToPath(import.meta.url))
 const CHANNEL = 'locust-glass:panel'
 
 /**
+ * A file of this package as it is on disk: in a packaged app, the copy unpacked beside the asar when the app unpacked
+ * it (asarUnpack), else the path inside the asar, which Electron's own fs, require and file: pages read anyway.
+ */
+function onDisk(file) {
+  const asar = `app.asar${sep}`
+  if (!file.includes(asar)) return file
+  const unpacked = file.replace(asar, `app.asar.unpacked${sep}`)
+  return existsSync(unpacked) ? unpacked : file
+}
+
+/**
+ * A real file for code outside Electron's reach (AppKit opening a picture cannot read inside an asar): a picture
+ * still packed in one is copied out to the temporary folder first.
+ */
+function realFile(file) {
+  const found = onDisk(file)
+  if (!found.includes(`.asar${sep}`)) return found
+  const copy = join(tmpdir(), `locust-glass-${process.pid}-${basename(found)}`)
+  if (!existsSync(copy)) copyFileSync(found, copy)
+  return copy
+}
+
+/**
  * Rainbow: a painting of soft colour to put under the glass (applyGlass(win, { backdrop: RAINBOW })), so the window
  * glows the same over any desktop, a dark one included. Locust's "Behind the glass > Rainbow".
  */
-export const RAINBOW = join(here, 'rainbow.jpg').replace('app.asar', 'app.asar.unpacked')
+export const RAINBOW = onDisk(join(here, 'rainbow.jpg'))
+
+/**
+ * The glass's preload script, which only needs Electron itself, so it runs in a sandboxed preload as Electron makes
+ * them by default. Use it as the window's preload (`webPreferences: { preload: PRELOAD }`), or beside your own with
+ * registerGlassPreload. With a bundler you can instead `import 'locust-glass/preload'` in your own preload.
+ */
+export const PRELOAD = join(here, 'preload.cjs')
+
+/**
+ * Runs the glass's preload in every window of a session, beside the window's own preload: for an app that already has
+ * one. Call it before the windows load. Electron 35+ (registerPreloadScript); older Electron, setPreloads.
+ */
+export function registerGlassPreload(session) {
+  if (typeof session.registerPreloadScript === 'function') {
+    session.registerPreloadScript({ type: 'frame', filePath: PRELOAD })
+  } else {
+    session.setPreloads([...session.getPreloads().filter((file) => file !== PRELOAD), PRELOAD])
+  }
+}
 
 /** The window buttons inside a floating sidebar panel's corner, centred on a 50px title bar. */
 export const TRAFFIC_LIGHTS = Object.freeze({ x: 20, y: 18 })
@@ -39,8 +82,9 @@ function native() {
   addon = null
   if (process.platform !== 'darwin') return addon
   try {
-    // Beside this file in the package, and unpacked from an app's asar when an app ships it (asarUnpack build/**).
-    const file = join(here, '..', 'build', 'glass.node').replace('app.asar', 'app.asar.unpacked')
+    // Beside this file in the package, built for both Mac chips (the package ships it). In a packaged app, unpacked
+    // beside the asar (electron-builder unpacks .node files by itself), or loaded from inside it, which Electron allows.
+    const file = onDisk(join(here, '..', 'build', 'glass.node'))
     const loaded = createRequire(import.meta.url)(file)
     if (loaded.supported()) addon = loaded
   } catch {
@@ -121,7 +165,7 @@ export function applyGlass(win, { style = 'regular', backdrop, windowsMaterial =
   try {
     // The material first: left on, it draws over the glass and blurs it again.
     win.setVibrancy(null)
-    if (backdrop) glass.backdrop(handle, backdrop)
+    if (backdrop) glass.backdrop(handle, realFile(backdrop))
     if (!glass.attach(handle, { style: style === 'clear' ? 1 : 0 })) throw new Error('not attached')
   } catch {
     win.setVibrancy('sidebar')
