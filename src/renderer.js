@@ -360,5 +360,16 @@ export function glassPage() {
     if (drawn) document.documentElement.setAttribute('data-glass-drawn', drawn)
     else document.documentElement.removeAttribute('data-glass-drawn')
   })
+  // Windows: the backdrop the window asked for, painted by the page under everything (glass.css).
+  globalThis.locustGlass?.onBackdrop?.((url) => {
+    const root = document.documentElement
+    if (url) {
+      root.style.setProperty('--lg-backdrop', `url(${JSON.stringify(url)})`)
+      root.setAttribute('data-glass-backdrop', '')
+    } else {
+      root.style.removeProperty('--lg-backdrop')
+      root.removeAttribute('data-glass-backdrop')
+    }
+  })
   return () => { for (const stop of stops) stop() }
 }

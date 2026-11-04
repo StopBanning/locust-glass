@@ -11,6 +11,12 @@ const api = {
     ipcRenderer.on('locust-glass:drawn', listener)
     return () => ipcRenderer.removeListener('locust-glass:drawn', listener)
   },
+  /** Windows: calls back with the picture the page paints under everything (a file: URL), or null for none. */
+  onBackdrop: (callback) => {
+    const listener = (_event, url) => callback(typeof url === 'string' && url.startsWith('file:') ? url : null)
+    ipcRenderer.on('locust-glass:backdrop', listener)
+    return () => ipcRenderer.removeListener('locust-glass:backdrop', listener)
+  },
   platform: process.platform
 }
 

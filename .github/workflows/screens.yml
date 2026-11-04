@@ -33,12 +33,24 @@ jobs:
           query session 2>$null
           "Session: $([System.Diagnostics.Process]::GetCurrentProcess().SessionId)"
           exit 0
-      - name: The demo on Acrylic, over a colourful window, taken through the system
+      - name: A screen big enough for the whole demo
+        shell: pwsh
+        continue-on-error: true
+        run: Set-DisplayResolution -Width 1920 -Height 1080 -Force
+      # Each run checks every piece in the page (demo/checks.mjs) and fails on any miss.
+      - name: The demo on Acrylic, over a colourful window, checked and taken through the system
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force shots | Out-Null
           npx electron demo/main.mjs --screenshot shots/windows.png
+          if ($LASTEXITCODE -ne 0) { exit 1 }
           npx electron demo/main.mjs --screenshot shots/windows-frameless.png --frameless
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: The sample, Rainbow painted under the page, checked and cropped to the window
+        shell: pwsh
+        run: |
+          npx electron demo/main.mjs --screenshot shots/windows-sample.png --crop --rainbow
+          if ($LASTEXITCODE -ne 0) { exit 1 }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -56,7 +68,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y xvfb libgtk-3-0 libnss3 libasound2t64 libgbm1 libxss1
       - run: npm install --no-audit --no-fund
       - run: npm test
-      - name: The demo with the page's own glass, taken through the system
+      - name: The demo with the page's own glass, checked and taken through the system
         run: |
           mkdir -p shots
           xvfb-run -a -s "-screen 0 1440x900x24" npx electron demo/main.mjs --screenshot shots/linux.png --no-sandbox

@@ -48,6 +48,12 @@
   background: transparent;
 }
 
+/* Windows: a backdrop asked for (applyGlass's `backdrop`) is painted by the page, under everything, where a Mac puts it
+   under the glass. The lens and the goo bend it, and the panels frost it. */
+:root[data-glass-backdrop] body {
+  background: #1b1233 var(--lg-backdrop) center / cover no-repeat fixed;
+}
+
 /* A floating panel. On macOS 26 the real glass is under it (data-glass-panel); elsewhere it frosts the page. */
 .lg-panel {
   position: relative;

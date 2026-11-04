@@ -13,11 +13,11 @@
 //
 // The page then marks its panels with data-glass-panel (see locust-glass/renderer), and they float on real glass.
 // Written for Locust (https://locust.lol). MIT licensed.
-import { ipcMain } from 'electron'
+import { ipcMain, nativeTheme } from 'electron'
 import { createRequire } from 'node:module'
 import { release } from 'node:os'
 import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 import { windowsMaterialSupported as windowsMaterialAt } from './platform.js'
 
@@ -72,8 +72,15 @@ export function glassSupported() {
  * glass, so the window is never opaque. Elsewhere: the plain options, for the page layer alone.
  */
 export function glassWindowOptions() {
-  // Windows: clear behind the page from the first frame, so Acrylic has nothing opaque to sit under.
-  if (process.platform === 'win32') return { backgroundColor: '#00000000' }
+  // Windows: clear behind the page from the first frame, so Acrylic has nothing opaque to sit under, and the title bar
+  // hidden with Windows' own buttons over the page's top right corner -- the counterpart of the Mac's inset buttons.
+  if (process.platform === 'win32') {
+    return {
+      backgroundColor: '#00000000',
+      titleBarStyle: 'hidden',
+      titleBarOverlay: { color: '#00000000', symbolColor: nativeTheme.shouldUseDarkColors ? '#f2f2f2' : '#1c1c1c', height: 40 }
+    }
+  }
   if (process.platform !== 'darwin') return { backgroundColor: '#00000000' }
   return {
     titleBarStyle: 'hiddenInset',
@@ -90,7 +97,8 @@ const drawn = new WeakSet()
  * Puts the window on the system's glass. Returns true when it is drawn on glass now. `style`: 'regular' (default), or
  * 'clear', the more transparent glass (on Windows, Acrylic either way; `windowsMaterial: 'mica'` asks for Windows'
  * quieter, wallpaper-tinted Mica instead). `backdrop`: a picture put under the glass inside the window -- RAINBOW,
- * or your own -- instead of the desktop (macOS only: Windows' glass shows what is behind the window). Answers the
+ * or your own -- instead of the desktop. On Windows the page paints it under everything (glass.css), which also gives
+ * the lens and the goo something to bend; the page's Content-Security-Policy must allow `img-src file:`. Answers the
  * page's panels from then on.
  */
 export function applyGlass(win, { style = 'regular', backdrop, windowsMaterial = 'acrylic' } = {}) {
@@ -104,6 +112,7 @@ export function applyGlass(win, { style = 'regular', backdrop, windowsMaterial =
     }
     drawn.add(win)
     win.webContents.send('locust-glass:drawn', 'windows')
+    win.webContents.send('locust-glass:backdrop', backdrop ? pathToFileURL(backdrop).href : null)
     return true
   }
   const glass = native()
@@ -135,6 +144,7 @@ export function removeGlass(win) {
     }
     drawn.delete(win)
     win.webContents.send('locust-glass:drawn', false)
+    win.webContents.send('locust-glass:backdrop', null)
     return
   }
   const glass = native()
