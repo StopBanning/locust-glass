@@ -89,7 +89,7 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npx electron --version
-          NODE_OPTIONS=--import=../../test/example-check.mjs xvfb-run -a "$(node -p "require('electron')")" . --no-sandbox
+          ELECTRON_DISABLE_SANDBOX=1 NODE_OPTIONS=--import=../../test/example-check.mjs xvfb-run -a "$(node -p "require('electron')")" --no-sandbox .
       - uses: actions/upload-artifact@v4
         if: always()
         with:
