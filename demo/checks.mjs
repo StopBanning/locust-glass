@@ -85,6 +85,7 @@ export const pageChecks = ({ kind, backdrop }) => `(async () => {
   await wait(1200)
   ok('a new drop drips out of the sheet', toolbar.querySelectorAll('.is-new').length === drops + 1, (toolbar.querySelectorAll('.is-new').length - drops) + ' new')
   ok('the sheet reshapes around it', (sheet.style.maskImage || sheet.style.webkitMaskImage) !== before, 'mask changed')
+  toolbar.querySelector('.is-new:last-of-type')?.remove()
 
   // Shine and squish.
   const box = card.getBoundingClientRect()
