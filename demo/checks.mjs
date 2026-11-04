@@ -91,6 +91,11 @@ export const pageChecks = ({ kind, backdrop }) => `(async () => {
   card.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: box.left + box.width / 2, clientY: box.top + box.height / 4 }))
   ok('the light follows the pointer', card.style.getPropertyValue('--lg-x') === '50.0%' && card.style.getPropertyValue('--lg-y') === '25.0%', card.style.getPropertyValue('--lg-x') + ' ' + card.style.getPropertyValue('--lg-y'))
   const pill = toolbar.querySelector('.lg-pill')
-  ok('buttons spring when pressed', /transform|all/.test(css(pill, 'transitionProperty')), css(pill, 'transitionProperty'))
+  // Windows Server, like a person's Windows with animations off, asks for less motion: then the buttons hold still.
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    ok('buttons hold still when the system asks for less motion', css(pill, 'transitionProperty') === 'none' || css(pill, 'transitionDuration') === '0s', css(pill, 'transitionProperty'))
+  } else {
+    ok('buttons spring when pressed', /transform|all/.test(css(pill, 'transitionProperty')), css(pill, 'transitionProperty'))
+  }
   return out
 })()`
